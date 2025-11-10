@@ -10,14 +10,16 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import logo from "@/public/placeholder.png";
-import { Link } from "react-router";
+import { Link, Navigate, useNavigate } from "react-router";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { Loader2 } from "lucide-react";
 
 const signInSchema = z.object({
   username: z.string().min(1, "Username is required"),
-  password: z.string().min(8, "Password must be at least 8 characters long"),
+  password: z.string(),
 });
 
 type SignInFormValues = z.infer<typeof signInSchema>;
@@ -35,9 +37,22 @@ export function SigninForm({
     resolver: zodResolver(signInSchema),
   });
 
-  const onSubmit = (data: SignInFormValues) => {
-    console.log({ data });
-  };
+
+  // Lấy method của useAuthStore ra
+  const {signIn} = useAuthStore();
+
+  const navigate = useNavigate();
+
+  const onSubmit = async (data: SignInFormValues) => {
+    // Bóc tách data ra để tránh việc gửi lên server nhiều lần
+    const {username, password} = data;
+    
+    // Call API SignUp
+    const res:any = await signIn(username, password);
+    
+    // Chuyển hướng trang đến trang đăng nhập
+    res?.status && navigate("/");
+  }
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -71,7 +86,7 @@ export function SigninForm({
               </Field>
               <Field>
                 <Button disabled={isSubmitting} type="submit">
-                  Sign In
+                  {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" /></> : "Sign In"}
                 </Button>
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">

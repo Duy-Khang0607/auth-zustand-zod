@@ -1,43 +1,68 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import logo from "@/public/placeholder.png"
-import { Link } from "react-router"
-import { z } from "zod"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import logo from "@/public/placeholder.png";
+import { Link, useNavigate } from "react-router";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const signUpSchema = z.object({
-  username: z.string().min(1,'Username is required'),
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8,'Password must be at least 8 characters long'),
-  firstName: z.string().min(1,'First name is required'),
-  lastName: z.string().min(1,'Last name is required'),
-})
+  username: z.string().min(1, "Username is required"),
+  email: z.string().email("Invalid email address"),
+  password: z.string(),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+});
 
-type SignUpFormValues = z.infer<typeof signUpSchema>
+type SignUpFormValues = z.infer<typeof signUpSchema>;
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-
-  // Lấy method của zod ra 
-  const {register, handleSubmit, formState: {errors,isSubmitting}} = useForm<SignUpFormValues>({
+  // Lấy method của zod ra
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
-  })
+  });
 
-  const onSubmit = (data: SignUpFormValues) => {
-    console.log({data})
-  }
+  // Lấy method của useAuthStore ra
+  const { signUp } = useAuthStore();
+
+  // Lấy navigate ra chuyển hướng trang
+  const navigate = useNavigate();
+
+  const onSubmit = async (data: SignUpFormValues) => {
+    // Bóc tách data ra để tránh việc gửi lên server nhiều lần
+    const { username, email, password, firstName, lastName } = data;
+
+    // Call API SignUp
+    const res: any = await signUp(
+      username,
+      email,
+      password,
+      firstName,
+      lastName
+    );
+
+    // Chuyển hướng trang đến trang đăng nhập
+    res?.status && navigate("/signin");
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -53,12 +78,10 @@ export function SignupForm({
               </div>
               <Field>
                 <FieldLabel htmlFor="username">Name</FieldLabel>
-                <Input
-                  id="username"
-                  type="text"
-                  {...register('username')}
-                />
-                {errors.username && <p className="text-red-500">{errors.username.message}</p>}
+                <Input id="username" type="text" {...register("username")} />
+                {errors.username && (
+                  <p className="text-red-500">{errors.username.message}</p>
+                )}
               </Field>
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
@@ -66,35 +89,59 @@ export function SignupForm({
                   id="email"
                   type="email"
                   placeholder="m@example.com"
-                  {...register('email')}
+                  {...register("email")}
                 />
-                {errors.email && <p className="text-red-500">{errors.email.message}</p>}
+                {errors.email && (
+                  <p className="text-red-500">{errors.email.message}</p>
+                )}
               </Field>
               <Field>
                 <FieldLabel htmlFor="password">Password</FieldLabel>
                 <Input
                   id="password"
                   type="password"
-                  {...register('password')}
+                  {...register("password")}
                 />
-                {errors.password && <p className="text-red-500">{errors.password.message}</p>}
+                {errors.password && (
+                  <p className="text-red-500">{errors.password.message}</p>
+                )}
               </Field>
               <Field>
                 <Field className="grid grid-cols-2 gap-4">
                   <Field>
                     <FieldLabel htmlFor="firstName">First Name</FieldLabel>
-                    <Input id="firstName" type="text"  {...register('firstName')} />
-                    {errors.firstName && <p className="text-red-500">{errors.firstName.message}</p>}
+                    <Input
+                      id="firstName"
+                      type="text"
+                      {...register("firstName")}
+                    />
+                    {errors.firstName && (
+                      <p className="text-red-500">{errors.firstName.message}</p>
+                    )}
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="lastName">Last Name</FieldLabel>
-                    <Input id="lastName" type="text"  {...register('lastName')} />
-                    {errors.lastName && <p className="text-red-500">{errors.lastName.message}</p>}
+                    <Input
+                      id="lastName"
+                      type="text"
+                      {...register("lastName")}
+                    />
+                    {errors.lastName && (
+                      <p className="text-red-500">{errors.lastName.message}</p>
+                    )}
                   </Field>
                 </Field>
               </Field>
               <Field>
-                <Button disabled={isSubmitting} type="submit">Create Account</Button>
+                <Button disabled={isSubmitting} type="submit">
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    </>
+                  ) : (
+                    "Create Account"
+                  )}
+                </Button>
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                 Or continue with
@@ -147,5 +194,5 @@ export function SignupForm({
         and <a href="#">Privacy Policy</a>.
       </FieldDescription>
     </div>
-  )
+  );
 }

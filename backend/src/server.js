@@ -5,6 +5,7 @@ import authRoute from './routes/authRoute.js';
 import userRoute from './routes/userRoute.js';
 import cookieParser from 'cookie-parser';
 import { protectedRoute } from './middlewares/authMiddlewares.js';
+import cors from 'cors';
 
 dotenv.config(); // load file .env
 
@@ -14,6 +15,10 @@ const PORT = process.env.PORT || 5001;
 // middleware
 app.use(express.json()); // Giúp express hiểu được dữ liệu gửi lên là json
 app.use(cookieParser()); // Giúp express hiểu được dữ liệu gửi lên là cookie
+app.use(cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+}));
 // public routes
 app.use('/api/auth', authRoute);
 

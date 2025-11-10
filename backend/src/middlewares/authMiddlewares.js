@@ -9,7 +9,7 @@ export const protectedRoute = async (req, res, next) => {
         const token = authHeader && authHeader?.split(' ')[1];
 
         if(!token) {
-            return res.status(401).json({ message: "Không có access token" });
+            return res.status(401).json({ status: false, message: "Không có access token" });
         }
 
         // Xác thực access token hợp lệ
